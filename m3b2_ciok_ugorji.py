@@ -70,12 +70,12 @@ def parseFile(input):
         elif 'BIRTH' in newIndividual:
             if tag == 'DATE':
                 newIndividual['BIRTH']['BDATE'] = ' '.join(lineSections[2:])
-        if 'MARR' in newFamily:
-            if tag == 'DATE':
-                newFamily['MARR']['MDATE'] = ' '.join(lineSections[2:])
-        elif 'DIV' in newFamily:
+        if 'DIV' in newFamily:
             if tag == 'DATE':
                 newFamily['DIV']['DIVDATE'] = ' '.join(lineSections[2:])
+        elif 'MARR' in newFamily:
+            if tag == 'DATE':
+                newFamily['MARR']['MDATE'] = ' '.join(lineSections[2:])
     
 
 with open('m3b2_test.ged') as gedcomFile:
@@ -144,3 +144,85 @@ for family in allFamilies:
     childrenIDFiltered = childrenString[1:-1]
 
     print("{:<10} {:<20} {:<20} {:<15} {:<20} {:<10} {:<20} {:<10} ".format(famIDFiltered, marryDate, divorceDate, husbandIDFiltered, husbandName, wifeIDFiltered, wifeName, childrenIDFiltered))
+
+print("")
+print("----------------------------------------------------------------------------------------------------------------------------------")
+print("")
+
+def checkDates():
+    # create a standardized reference for current date
+    reference = datetime.today()
+    for individual in allIndividuals:
+        # get descriptive information needed for output
+        indID = individual.get('INDI', '')
+        indString = ''.join(indID)
+        indIDFiltered = indString[1:-1]
+        name = individual.get('NAME', '')
+
+        # get date information and compare with current date
+        birth_date = individual.get('BIRTH', {}).get('BDATE', '')
+        death_date = individual.get('DEATH', {}).get('DDATE', '')
+        birthDay = datetime.strptime(birth_date, "%d %b %Y")
+        if ((reference.year < birthDay.year) or (reference.year == birthDay.year and reference.month < birthDay.month) or (reference.year == birthDay.year and reference.momth == birthDay.month and reference.day < birthDay.day)):
+            print("ERROR in " + indIDFiltered + ": birth of " + name + " on " + birth_date + " is after current date.")
+        if death_date:
+            deathDay = datetime.strptime(death_date, "%d %b %Y")
+            if ((reference.year < deathDay.year) or (reference.year == deathDay.year and reference.month < deathDay.month) or (reference.year == deathDay.year and reference.momth == deathDay.month and reference.day < deathDay.day)):
+                print("ERROR in " + indIDFiltered + ": death of " + name + " on " + death_date + " is after current date.")
+
+    for family in allFamilies:
+        # get descriptive information needed for output
+        famID = family.get('FAM', '')
+        famIDString = ''.join(famID)
+        famIDFiltered = famIDString[1:-1]
+        husbandID = family.get('HUSB', '')
+        hLookupString = ''.join(husbandID)
+        hLookup = int(hLookupString[2:-1]) - 1
+        husbandName = allIndividuals[hLookup].get('NAME','')
+        wifeID = family.get('WIFE', '')
+        wLookupString = ''.join(wifeID)
+        wLookup = int(wLookupString[2:-1]) - 1
+        wifeName = allIndividuals[wLookup].get('NAME','')
+        
+        # get date information and compare with current date
+        marryDate = family.get('MARR', {}).get('MDATE', '')
+        divorceDate = family.get('DIV', {}).get('DIVDATE', '')
+        if marryDate:
+            marryDay = datetime.strptime(marryDate, "%d %b %Y")
+            if ((reference.year < marryDay.year) or (reference.year == marryDay.year and reference.month < marryDay.month) or (reference.year == marryDay.year and reference.momth == marryDay.month and reference.day < marryDay.day)):
+                print("ERROR in " + famIDFiltered + ": marriage of " + husbandName + " and " + wifeName + " on " + marryDate + " is after current date.")
+        if divorceDate:
+            divorceDay = datetime.strptime(divorceDate, "%d %b %Y")
+            if ((reference.year < divorceDay.year) or (reference.year == divorceDay.year and reference.month < divorceDay.month) or (reference.year == divorceDay.year and reference.momth == divorceDay.month and reference.day < divorceDay.day)):
+                print("ERROR in " + famIDFiltered + ": divorce of " + husbandName + " and " + wifeName + " on " + divorceDate + " is after current date.")
+    
+def checkBirthMarriage():
+    for family in allFamilies:
+        # get descriptive information needed for output
+        famID = family.get('FAM', '')
+        famIDString = ''.join(famID)
+        famIDFiltered = famIDString[1:-1]
+        husbandID = family.get('HUSB', '')
+        hLookupString = ''.join(husbandID)
+        hLookup = int(hLookupString[2:-1]) - 1
+        husbandName = allIndividuals[hLookup].get('NAME','')
+        wifeID = family.get('WIFE', '')
+        wLookupString = ''.join(wifeID)
+        wLookup = int(wLookupString[2:-1]) - 1
+        wifeName = allIndividuals[wLookup].get('NAME','')
+
+        # get date information and compare
+        husbandBirth = allIndividuals[hLookup].get('BIRTH', {}).get('BDATE', '')
+        hBirthDay = datetime.strptime(husbandBirth, "%d %b %Y")
+        wifeBirth = allIndividuals[wLookup].get('BIRTH', {}).get('BDATE', '')
+        wBirthDay = datetime.strptime(wifeBirth, "%d %b %Y")
+        marryDate = family.get('MARR', {}).get('MDATE', '')
+        if marryDate:
+            marryDay = datetime.strptime(marryDate, "%d %b %Y")
+            if ((marryDay.year < hBirthDay.year) or (marryDay.year == hBirthDay.year and marryDay.month < hBirthDay.month) or (marryDay.year == hBirthDay.year and marryDay.month == hBirthDay.month and marryDay.day < hBirthDay.day)):
+                print("ERROR in " + famIDFiltered + ": marriage of " + husbandName + " and " + wifeName + " on " + marryDate + " is before husband's birth date.")
+            elif ((marryDay.year < wBirthDay.year) or (marryDay.year == wBirthDay.year and marryDay.month < wBirthDay.month) or (marryDay.year == wBirthDay.year and marryDay.month == wBirthDay.month and marryDay.day < wBirthDay.day)):
+                print("ERROR in " + famIDFiltered + ": marriage of " + husbandName + " and " + wifeName + " on " + marryDate + " is before wife's birth date.")
+
+checkDates()
+checkBirthMarriage()
