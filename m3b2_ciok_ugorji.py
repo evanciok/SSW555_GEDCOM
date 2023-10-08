@@ -263,6 +263,31 @@ def checkRelationshipDeath():
                 if ((wDeathDay.year < divorceDay.year) or (wDeathDay.year == divorceDay.year and wDeathDay.month < divorceDay.month) or (wDeathDay.year == divorceDay.year and wDeathDay.month == divorceDay.month and wDeathDay.day < divorceDay.day)):
                     print("ERROR in " + famIDFiltered + ": divorce of " + husbandName + " and " + wifeName + " on " + divorceDate + " is after wife's death.")
 
+def checkMarriageDivorce():
+    for family in allFamilies:
+        famID = family.get('FAM', '')
+        famIDString = ''.join(famID)
+        famIDFiltered = famIDString[1:-1]
+        husbandID = family.get('HUSB', '')
+        hLookupString = ''.join(husbandID)
+        hLookup = int(hLookupString[2:-1]) - 1
+        husbandName = allIndividuals[hLookup].get('NAME','')
+        wifeID = family.get('WIFE', '')
+        wLookupString = ''.join(wifeID)
+        wLookup = int(wLookupString[2:-1]) - 1
+        wifeName = allIndividuals[wLookup].get('NAME','')
+        
+        marryDate = family.get('MARR', {}).get('MDATE', '')
+        divorceDate = family.get('DIV', {}).get('DIVDATE', '')
+        if marryDate and divorceDate:
+            marryDay = datetime.strptime(marryDate, "%d %b %Y")
+            divorceDay = datetime.strptime(divorceDate, "%d %b %Y")
+            if (marryDay < divorceDay):
+                print("ERROR in " + famIDFiltered + ": divorce of " + husbandName + " and " + wifeName + " on " + divorceDate + " is after wife's death.")
+
+
+
 checkDates()
 checkBirthMarriage()
 checkRelationshipDeath()
+checkMarriageDivorce()
