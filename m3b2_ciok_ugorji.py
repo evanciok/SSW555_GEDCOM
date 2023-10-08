@@ -78,7 +78,7 @@ def parseFile(input):
                 newFamily['MARR']['MDATE'] = ' '.join(lineSections[2:])
     
 
-with open('m3b2_test.ged') as gedcomFile:
+with open('m5b1_test.ged') as gedcomFile:
     for line in gedcomFile:
         parseFile(line)
 
@@ -282,8 +282,8 @@ def checkMarriageDivorce():
         if marryDate and divorceDate:
             marryDay = datetime.strptime(marryDate, "%d %b %Y")
             divorceDay = datetime.strptime(divorceDate, "%d %b %Y")
-            if (marryDay < divorceDay):
-                print("ERROR in " + famIDFiltered + ": divorce of " + husbandName + " and " + wifeName + " on " + divorceDate + " is after wife's death.")
+            if (marryDay > divorceDay):
+                print("ERROR in " + famIDFiltered + ": divorce of " + husbandName + " and " + wifeName + " on " + divorceDate + " is before their marriage date.")
 
 
 
