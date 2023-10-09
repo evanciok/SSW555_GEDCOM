@@ -78,7 +78,7 @@ def parseFile(input):
                 newFamily['MARR']['MDATE'] = ' '.join(lineSections[2:])
     
 
-with open('m5b1_test.ged') as gedcomFile:
+with open('m3b2_test.ged') as gedcomFile:
     for line in gedcomFile:
         parseFile(line)
 
@@ -286,8 +286,22 @@ def checkMarriageDivorce():
                 print("ERROR in " + famIDFiltered + ": divorce of " + husbandName + " and " + wifeName + " on " + divorceDate + " is before their marriage date.")
 
 
+def checkBirthDeath():
+    for individual in allIndividuals:
+        indID = individual.get('INDI', '')
+        indString = ''.join(indID)
+        indIDFiltered = indString[1:-1]
+        name = individual.get('NAME', '')
+        birth_date = individual.get('BIRTH', {}).get('BDATE', '')
+        death_date = individual.get('DEATH', {}).get('DDATE', '')
+        if birth_date and death_date:
+            birthDay = datetime.strptime(birth_date, "%d %b %Y")
+            deathDay = datetime.strptime(death_date, "%d %b %Y")
+            if (birthDay > deathDay):
+                print("ERROR in " + indIDFiltered + ": death of " + name + " on " + death_date + " is before their birth date.")
 
 checkDates()
 checkBirthMarriage()
 checkRelationshipDeath()
 checkMarriageDivorce()
+checkBirthDeath()
