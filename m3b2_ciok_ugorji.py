@@ -19,6 +19,29 @@ allFamilies = []
 newIndividual = {}
 newFamily = {}
 
+Individuals = []
+Families = []
+global curr_ind
+global curr_fam
+
+class Individual:
+    ind_id = "XX"
+    fname = "XXXX"
+    given_lname = "XXXX"
+    lname = "XXXX"
+    bday = "XXXX"
+    #dday
+    cfam = {}
+    #sfam
+
+class Family:
+    fam_id = "XX"
+    married = "XXXX"
+    #divorced
+    wife = {}
+    husband = {}
+    children = []
+
 def parseFile(input):
     global newIndividual
     global newFamily
@@ -300,6 +323,37 @@ def checkBirthDeath():
             if (birthDay > deathDay):
                 print("ERROR in " + indIDFiltered + ": death of " + name + " on " + death_date + " is before their birth date.")
 
+def checkBigamy():
+    seenIds = []
+    for family in allFamilies:
+        famID = family.get('FAM', '')
+        famIDString = ''.join(famID)
+        famIDFiltered = famIDString[1:-1]
+        husbandID = family.get('HUSB', '')
+        hLookupString = ''.join(husbandID)
+        hLookup = int(hLookupString[2:-1]) - 1
+        husbandName = allIndividuals[hLookup].get('NAME','')
+        wifeID = family.get('WIFE', '')
+        wLookupString = ''.join(wifeID)
+        wLookup = int(wLookupString[2:-1]) - 1
+        wifeName = allIndividuals[wLookup].get('NAME','')
+        
+        if divorceDate:
+            pass
+        else:
+            try:
+                if (seenIds.index(husbandID) > -1):
+                    print("ERROR for " + husbandName + ": individual " + husbandName + " is married to both " + wifeName + " and another individual")
+            except ValueError:
+                seenIds.append(husbandID)
+
+            try:
+                if (seenIds.index(wifeID) > -1):
+                    print("ERROR for " + wifeName + ": individual " + wifeName + " is married to both " + husbandName + " and another individual")
+            except ValueError:
+                seenIds.append(wifeID)
+
+checkBigamy()
 checkDates()
 checkBirthMarriage()
 checkRelationshipDeath()
