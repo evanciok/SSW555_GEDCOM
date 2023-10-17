@@ -286,42 +286,47 @@ def checkRelationshipDeath():
                 if ((wDeathDay.year < divorceDay.year) or (wDeathDay.year == divorceDay.year and wDeathDay.month < divorceDay.month) or (wDeathDay.year == divorceDay.year and wDeathDay.month == divorceDay.month and wDeathDay.day < divorceDay.day)):
                     print("ERROR in " + famIDFiltered + ": divorce of " + husbandName + " and " + wifeName + " on " + divorceDate + " is after wife's death.")
 
-def checkMarriageDivorce():
-    for family in allFamilies:
-        famID = family.get('FAM', '')
-        famIDString = ''.join(famID)
-        famIDFiltered = famIDString[1:-1]
-        husbandID = family.get('HUSB', '')
-        hLookupString = ''.join(husbandID)
-        hLookup = int(hLookupString[2:-1]) - 1
-        husbandName = allIndividuals[hLookup].get('NAME','')
-        wifeID = family.get('WIFE', '')
-        wLookupString = ''.join(wifeID)
-        wLookup = int(wLookupString[2:-1]) - 1
-        wifeName = allIndividuals[wLookup].get('NAME','')
-        
-        marryDate = family.get('MARR', {}).get('MDATE', '')
-        divorceDate = family.get('DIV', {}).get('DIVDATE', '')
-        if marryDate and divorceDate:
-            marryDay = datetime.strptime(marryDate, "%d %b %Y")
-            divorceDay = datetime.strptime(divorceDate, "%d %b %Y")
-            if (marryDay > divorceDay):
-                print("ERROR in " + famIDFiltered + ": divorce of " + husbandName + " and " + wifeName + " on " + divorceDate + " is before their marriage date.")
+def checkMarriageDivorce(family):
+    famID = family.get('FAM', '')
+    famIDString = ''.join(famID)
+    famIDFiltered = famIDString[1:-1]
+    husbandID = family.get('HUSB', '')
+    hLookupString = ''.join(husbandID)
+    hLookup = int(hLookupString[2:-1]) - 1
+    husbandName = allIndividuals[hLookup].get('NAME','')
+    wifeID = family.get('WIFE', '')
+    wLookupString = ''.join(wifeID)
+    wLookup = int(wLookupString[2:-1]) - 1
+    wifeName = allIndividuals[wLookup].get('NAME','')    
+    marryDate = family.get('MARR', {}).get('MDATE', '')
+    divorceDate = family.get('DIV', {}).get('DIVDATE', '')
+    if marryDate and divorceDate:
+        marryDay = datetime.strptime(marryDate, "%d %b %Y")
+        divorceDay = datetime.strptime(divorceDate, "%d %b %Y")
+        if (marryDay > divorceDay):
+            return "ERROR in " + famIDFiltered + ": divorce of " + husbandName + " and " + wifeName + " on " + divorceDate + " is before their marriage date."
+        else:
+            return 'None'
+    else: 
+        return 'None'
 
 
-def checkBirthDeath():
-    for individual in allIndividuals:
-        indID = individual.get('INDI', '')
-        indString = ''.join(indID)
-        indIDFiltered = indString[1:-1]
-        name = individual.get('NAME', '')
-        birth_date = individual.get('BIRTH', {}).get('BDATE', '')
-        death_date = individual.get('DEATH', {}).get('DDATE', '')
-        if birth_date and death_date:
-            birthDay = datetime.strptime(birth_date, "%d %b %Y")
-            deathDay = datetime.strptime(death_date, "%d %b %Y")
-            if (birthDay > deathDay):
-                print("ERROR in " + indIDFiltered + ": death of " + name + " on " + death_date + " is before their birth date.")
+def checkBirthDeath(individual):
+    indID = individual.get('INDI', '')
+    indString = ''.join(indID)
+    indIDFiltered = indString[1:-1]
+    name = individual.get('NAME', '')
+    birthDate = individual.get('BIRTH', {}).get('BDATE', '')
+    deathDate = individual.get('DEATH', {}).get('DDATE', '')
+    if birthDate and deathDate:
+        birthDay = datetime.strptime(birthDate, "%d %b %Y")
+        deathDay = datetime.strptime(deathDate, "%d %b %Y")
+        if (birthDay > deathDay):
+            return "ERROR in " + indIDFiltered + ": death of " + name + " on " + deathDate + " is before their birth date."
+        else:
+            return 'None'
+    else:
+        return 'None'
 
 def checkBigamy():
     seenIds = []
@@ -357,5 +362,10 @@ checkBigamy()
 checkDates()
 checkBirthMarriage()
 checkRelationshipDeath()
-checkMarriageDivorce()
-checkBirthDeath()
+
+for individual in allIndividuals:
+    if (checkBirthDeath(individual)!='None'):
+        print(checkBirthDeath(individual))
+for family in allFamilies:
+    if (checkMarriageDivorce(family)!='None'):
+        print(checkBirthDeath(family))
