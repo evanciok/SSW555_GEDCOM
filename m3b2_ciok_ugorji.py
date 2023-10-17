@@ -19,72 +19,133 @@ allFamilies = []
 newIndividual = {}
 newFamily = {}
 
-Individuals = []
-Families = []
-global curr_ind
-global curr_fam
-
 class Individual:
-    ind_id = "XX"
+    _id = "XX"
+    sex = "X"
+    name = "XXXXXX /XXXX/"
     fname = "XXXX"
     given_lname = "XXXX"
     lname = "XXXX"
-    bday = "XXXX"
-    #dday
-    cfam = {}
-    #sfam
+    bday = None
+    dday = None
+    cfam = None
+    sfam = None
 
 class Family:
-    fam_id = "XX"
-    married = "XXXX"
-    #divorced
-    wife = {}
-    husband = {}
-    children = []
+    _id = "XX"
+    married = None
+    divorced = None
+    wife = "XXX"
+    husband = "XXX"
+    children = None
+
+Individuals = []
+Families = []
+curr_ind = None
+curr_fam = None
+readData = 0
 
 def parseFile(input):
     global newIndividual
     global newFamily
+    
+    global curr_ind
+    global curr_fam
+    global readData
+    
     fullLine = input.strip()
     lineSections = fullLine.split()
     level = int(lineSections[0])
 
     if level == 0 and len(lineSections) > 2:
-        tag = lineSections[2] 
+        tag = lineSections[2]
+        cleanup = 0
+        #david's additions for sanity{
+        while cleanup == 0:
+            if curr_ind:
+                Individuals.append(curr_ind)
+            curr_ind = None
+
+            if curr_fam:
+                Families.append(curr_fam)
+            curr_fam = None
+            cleanup = 1
+        #}
+        
         if tag == 'INDI':
+            readData = 1
             if newIndividual:
                 allIndividuals.append(newIndividual)
             newIndividual = {} 
             newIndividual['INDI'] = lineSections[1]
+
+            #david's additions for sanity{
+            curr_ind = Individual()
+            curr_ind._id = lineSections[1]
+            #}
+   
         elif tag == 'FAM':
+            readData = 2
             if newFamily:
                 allFamilies.append(newFamily)
             newFamily = {}
             newFamily['FAM'] = lineSections[1]
+
+            #david's additions for sanity{
+            curr_fam = Family()
+            curr_fam.children = []
+            curr_fam._id = lineSections[1]
+            
+        else:
+            readData = 0
+            #}
+            
     elif level == 1:
         tag = lineSections[1] 
-        if tag == 'NAME':
+        if tag == 'NAME' and readData == 1:
             newIndividual['NAME'] = ' '.join(lineSections[2:])
-        elif tag == 'SEX':
+            #---david's addition for sanity---
+            curr_ind.name = ' '.join(lineSections[2:])
+        elif tag == 'SEX' and readData == 1:
             newIndividual['SEX'] = lineSections[2]
-        elif tag == 'BIRT':
+            #---david's addition for sanity---
+            curr_ind.sex =  lineSections[2]
+        elif tag == 'BIRT' and readData == 1:
             newIndividual['BIRTH'] = {}
-        elif tag == 'FAMS':
+            #---david's addition for sanity---
+            curr_ind.bday = "XXXXXX"
+        elif tag == 'FAMS' and readData == 1:
             newIndividual['FAMS'] = lineSections[2]
-        elif tag == 'FAMC':
+            #---david's addition for sanity---
+            curr_ind.sfam = lineSections[2]
+        elif tag == 'FAMC' and readData == 1:
             newIndividual['FAMC'] = lineSections[2]
-        elif tag == 'DEAT':
+            #---david's addition for sanity---
+            curr_ind.cfam = lineSections[2]
+        elif tag == 'DEAT' and readData == 1:
             newIndividual['DEATH'] = {}
-        elif tag == 'MARR':
+            #---david's addition for sanity---
+            curr_ind.dday = "XXXXXX"
+        elif tag == 'MARR' and readData == 2:
             newFamily['MARR'] = {}
-        elif tag == 'DIV':
+            #---david's addition for sanity---
+            curr_fam.married = "XXXXXX"
+        elif tag == 'DIV' and readData == 2:
             newFamily['DIV'] = {}
-        elif tag == 'HUSB':
+            #---david's addition for sanity---
+            curr_fam.divorced = "XXXXXX"
+        elif tag == 'HUSB' and readData == 2:
             newFamily['HUSB'] = lineSections[2]
-        elif tag == 'WIFE':
+            #---david's addition for sanity---
+            curr_fam.husband = lineSections[2]
+        elif tag == 'WIFE' and readData == 2:
             newFamily['WIFE'] = lineSections[2]
-        elif tag == 'CHIL':
+            #---david's addition for sanity---
+            curr_fam.wife = lineSections[2]
+        elif tag == 'CHIL' and readData == 2:
             newFamily['CHIL'] = lineSections[2]
+            #---david's addition for sanity---
+            curr_fam.children.append(lineSections[2])
     elif level == 2:
         tag = lineSections[1]
         if 'DEATH' in newIndividual:
@@ -99,17 +160,77 @@ def parseFile(input):
         elif 'MARR' in newFamily:
             if tag == 'DATE':
                 newFamily['MARR']['MDATE'] = ' '.join(lineSections[2:])
-    
 
-with open('m3b2_test.ged') as gedcomFile:
+        #david's additions for sanity{
+        if readData == 1:
+            if curr_ind.bday == "XXXXXX":
+                if tag == 'DATE':
+                    curr_ind.bday = ' '.join(lineSections[2:])
+            elif curr_ind.dday == "XXXXXX":
+                if tag == 'DATE':
+                    curr_ind.dday = ' '.join(lineSections[2:])
+
+        if readData == 2:
+            if curr_fam.married == "XXXXXX":
+                if tag == 'DATE':
+                    curr_fam.married = ' '.join(lineSections[2:])
+            elif curr_fam.divorced == "XXXXXX":
+                if tag == 'DATE':
+                    curr_fam.divorced = ' '.join(lineSections[2:])
+        #}
+
+#david's additions for sanity{
+def findById(given_id, id_type):
+    if id_type == 'fam':
+        for fam in Families:
+            if (fam._id == given_id):
+                return fam
+        return Family()
+    elif id_type == 'ind':
+        for ind in Individuals:
+            if (ind._id == given_id):
+                return ind
+        return Individual()
+
+def toString(obj):
+    if isinstance(obj, Individual):
+        return ("\n id: " + str(obj._id) + "\n name: " + str(obj.name) + "\n bday: " + str(obj.bday))
+    elif isinstance(obj, Family):
+        children = ""
+        for child in obj.children:
+            children = children + "\n  " + str(findById(child, "ind").name)
+            concat = ("\n id: " + str(obj._id) + "\n married: " + str(obj.married) + "\n divorced: " + str(obj.divorced) + "\n husband: " + str(findById(obj.husband, "ind").name))
+            concat = (concat + "\n wife: " + str(findById(obj.wife, "ind").name) + "\n [" + children[3:] + "]")
+        return concat
+        for ind in Individuals:
+            if (ind._id == given_id):
+                return ind
+    elif isinstance(obj, list):
+        string = ""
+        for l in obj:
+            string = string + ", " + toString(l)
+        return ("[" + string[2:] + "]")
+    return str(obj)
+#}
+
+
+with open('m5b1_test.ged') as gedcomFile:
     for line in gedcomFile:
         parseFile(line)
+    if curr_ind:
+        Individuals.append(curr_ind)
+        curr_ind = None
+    if curr_fam:
+        Families.append(curr_fam)
+        curr_fam = None
 
 if newIndividual not in allIndividuals:
     allIndividuals.append(newIndividual) 
 
 if newFamily not in allFamilies:
     allFamilies.append(newFamily)
+
+
 
 print("{:<10} {:<20} {:<5} {:<15} {:<5} {:<10} {:<15} {:<10} {:<10}".format("ID", "Name", "Sex", "Birthday", "Age", "Status", "Death", "Child", "Spouse"))
 for individual in allIndividuals:
@@ -164,7 +285,8 @@ for family in allFamilies:
     
     children = family.get('CHIL', '')
     childrenString = ''.join(children)
-    childrenIDFiltered = childrenString[1:-1]
+    #childrenIDFiltered = childrenString[1:-1]
+    childrenIDFiltered = toString(findById(famIDString, "fam").children).replace('@', '')
 
     print("{:<10} {:<20} {:<20} {:<15} {:<20} {:<10} {:<20} {:<10} ".format(famIDFiltered, marryDate, divorceDate, husbandIDFiltered, husbandName, wifeIDFiltered, wifeName, childrenIDFiltered))
 
@@ -330,34 +452,31 @@ def checkBirthDeath(individual):
 
 def checkBigamy():
     seenIds = []
-    for family in allFamilies:
-        famID = family.get('FAM', '')
-        famIDString = ''.join(famID)
-        famIDFiltered = famIDString[1:-1]
-        husbandID = family.get('HUSB', '')
-        hLookupString = ''.join(husbandID)
-        hLookup = int(hLookupString[2:-1]) - 1
-        husbandName = allIndividuals[hLookup].get('NAME','')
-        wifeID = family.get('WIFE', '')
-        wLookupString = ''.join(wifeID)
-        wLookup = int(wLookupString[2:-1]) - 1
-        wifeName = allIndividuals[wLookup].get('NAME','')
-        
-        if divorceDate:
+    for fam in Families:
+        if fam.divorced:
             pass
         else:
             try:
-                if (seenIds.index(husbandID) > -1):
-                    print("ERROR for " + husbandName + ": individual " + husbandName + " is married to both " + wifeName + " and another individual")
+                if (seenIds.index(fam.husband) > -1):
+                    print("ERROR in " + fam._id[1:-1] + ": " + findById(fam.husband, 'ind').name + " is married to both " + findById(fam.wife, 'ind').name + " and another individual")
             except ValueError:
-                seenIds.append(husbandID)
+                seenIds.append(fam.husband)
 
             try:
-                if (seenIds.index(wifeID) > -1):
-                    print("ERROR for " + wifeName + ": individual " + wifeName + " is married to both " + husbandName + " and another individual")
+                if (seenIds.index(fam.wife) > -1):
+                    print("ERROR in " + fam._id[1:-1] + ": " + findById(fam.wife, 'ind').name + " is married to both " + findById(fam.husband, 'ind').name + " and another individual")
             except ValueError:
-                seenIds.append(wifeID)
+                seenIds.append(fam.wife)
 
+
+def checkBirths():
+    seenIds = []
+    births = 5
+    for fam in Families:
+        if len(fam.children) > births:
+            print("ERROR in " + fam._id[1:-1] + ": this family has more than " + str(births) + " births")
+
+checkBirths()
 checkBigamy()
 checkDates()
 checkBirthMarriage()
