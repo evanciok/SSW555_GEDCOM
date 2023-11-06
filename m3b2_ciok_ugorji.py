@@ -355,6 +355,37 @@ def checkBirths():
         if len(family.children) > births:
             print("ERROR in " + family._id[1:-1] + ": this family has more than " + str(births) + " births")
 
+def listMarried(family):
+    if family.divorced:
+        return 'None'
+    elif family.married:
+        husband = findById(family.husband, "ind")
+        wife = findById(family.wife, "ind")
+        if husband.dday or wife.dday:
+            return 'None'
+        else:
+            return husband.name + " and " + wife.name + " are married."
+    else:
+        return 'None'
+    
+def listSingle(individual):
+    age = findAge(individual.bday, individual.dday)
+    if individual.sfam:
+        return 'None'
+    elif age >= 30:
+        return individual.name + " is " + str(age) + " years old and single."
+    else:
+        return 'None'
+
+def checkMarryDescendant(family):
+    husband = findById(family.husband, "ind")
+    wife = findById(family.wife, "ind")
+    if husband.cfam == wife.sfam or husband.sfam == wife.cfam:
+        return 'Error in ' + family._id + ': invalid marriage to descendant.'
+    else:
+        return 'None'
+
+
 
 ###---------------Calls-----------------
 checkBirths()
@@ -367,7 +398,16 @@ for individual in Individuals:
     err = checkBirthDeath(individual)
     if (err !='None'):
         print(err)
+    err2 = listSingle(individual)
+    if (err2 != 'None'):
+        print(err2)
 for family in Families:
     err = checkMarriageDivorce(family)
     if (err !='None'):
         print(err)
+    err2 = listMarried(family)
+    if (err2 !='None'):
+        print(err2)
+    err3 = checkMarryDescendant(family)
+    if (err3 !='None'):
+        print(err3)
