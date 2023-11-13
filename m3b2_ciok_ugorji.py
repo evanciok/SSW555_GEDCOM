@@ -30,6 +30,8 @@ Families = []
 curr_ind = None
 curr_fam = None
 readData = 0
+indIDs = []
+famIDs = []
 
 ##########--------------------------------------------------------------------------------
 
@@ -61,11 +63,13 @@ def parseFile(file):
                 readData = 1
                 curr_ind = Individual()
                 curr_ind._id = lineSections[1]
+                indIDs.append(lineSections[1])
             elif tag == 'FAM':
                 readData = 2
                 curr_fam = Family()
                 curr_fam.children = []
                 curr_fam._id = lineSections[1]
+                famIDs.append(lineSections[1])
             else:
                 readData = 0
     
@@ -170,8 +174,75 @@ def toString(obj):
         return ("[" + string[2:] + "]")
     return str(obj)
 
-##########----------------------------------------------------------------------------------------
+#checks date for legitimacy
+def checkDate(dateRaw):
+    date = dateRaw.split(' ')
+    month = date[1]
+    day = int(date[0])
+    if month == 'JAN':
+        if day > 31:
+            return False
+        else:
+            return True
+    elif month == 'FEB':
+        if day > 28:
+            return False
+        else:
+            return True
+    elif month == 'MAR':
+        if day > 31:
+            return False
+        else:
+            return True
+    elif month == 'APR':
+        if day > 30:
+            return False
+        else:
+            return True
+    elif month == 'MAY':
+        if day > 31:
+            return False
+        else:
+            return True
+    elif month == 'JUN':
+        if day > 30:
+            return False
+        else:
+            return True
+    if month == 'JUL':
+        if day > 31:
+            return False
+        else:
+            return True
+    elif month == 'AUG':
+        if day > 31:
+            return False
+        else:
+            return True
+    elif month == 'SEP':
+        if day > 30:
+            return False
+        else:
+            return True
+    elif month == 'OCT':
+        if day > 31:
+            return False
+        else:
+            return True
+    elif month == 'NOV':
+        if day > 30:
+            return False
+        else:
+            return True
+    elif month == 'DEC':
+        if day > 31:
+            return False
+        else:
+            return True
+    else:
+        return False
 
+##########----------------------------------------------------------------------------------------
 
 #opens specified gedcom file
 with open('m5b1_test.ged') as gedcomFile:
@@ -385,7 +456,25 @@ def checkMarryDescendant(family):
     else:
         return 'None'
 
-
+def checkDuplicateInd(individual):
+    count = 0
+    for id in indIDs:
+        if id == individual._id:
+            count+=1
+    if count >= 2:
+        return 'Error: duplicate individual ID ' + individual._id[1:-1]
+    else:
+        return 'None'
+    
+def checkDuplicateFam(family):
+    countfam = 0
+    for id in famIDs:
+        if id == family._id:
+            countfam+=1
+    if countfam >= 2:
+        return 'Error: duplicate family ID ' + family._id[1:-1]
+    else:
+        return 'None'
 
 ###---------------Calls-----------------
 checkBirths()
@@ -401,6 +490,9 @@ for individual in Individuals:
     err2 = listSingle(individual)
     if (err2 != 'None'):
         print(err2)
+    err3 = checkDuplicateInd(individual)
+    if (err3 != 'None'):
+        print(err3)
 for family in Families:
     err = checkMarriageDivorce(family)
     if (err !='None'):
@@ -411,3 +503,6 @@ for family in Families:
     err3 = checkMarryDescendant(family)
     if (err3 !='None'):
         print(err3)
+    err4 = checkDuplicateFam(family)
+    if (err4 !='None'):
+        print(err4)
